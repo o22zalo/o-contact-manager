@@ -1,13 +1,1 @@
-feat(TASK-04,05,06): Core Utils — contactMapper, writeContact, pagination
-
-- TASK-04: buildContactDocs() transform contact JSON → {indexDoc, detailDoc, emailLookupDocs, udKeyUpdates}
-- TASK-04: buildSearchTokens() prefix ngrams + NFD normalize tiếng Việt (35 unit tests pass)
-- TASK-05: writeContact() atomic Firestore batch write 4 collections + cleanup cũ khi update
-- TASK-05: deleteContact() cleanup toàn bộ email_lookup + ud_key_lookup
-- TASK-05: bulkWriteContacts() concurrent import helper (concurrency=5)
-- TASK-06: cursor-based pagination (base64url encode/decode docId)
-- TASK-06: parseQueryParams, buildQuery, paginateQuery, buildListResponse
-- Files: functions/utils/searchTokens.js, contactMapper.js, writeContact.js, pagination.js
-- Tests: tests/contactMapper.test.js
-
-Task: TASK-04,05,06 | Status: COMPLETED | Date: 2026-03-28
+Trả lại Readme và template-task
