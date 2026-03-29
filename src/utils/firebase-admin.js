@@ -7,10 +7,21 @@ let _db = null;
 let _rtdb = null;
 let _initialized = false;
 
+function buildDefaultDatabaseUrl(projectId, databaseRegion) {
+  if (databaseRegion) {
+    return `https://${projectId}-default-rtdb.${databaseRegion}.firebasedatabase.app`;
+  }
+  return `https://${projectId}-default-rtdb.firebasedatabase.app`;
+}
+
 function initFirebase() {
   if (_initialized) return;
   const projectId = process.env.FIREBASE_PROJECT_ID;
   if (!projectId) throw new Error('Missing env: FIREBASE_PROJECT_ID');
+  const databaseRegion = process.env.FIREBASE_DATABASE_REGION;
+  const databaseURL =
+    process.env.FIREBASE_DATABASE_URL ||
+    buildDefaultDatabaseUrl(projectId, databaseRegion);
   if (!admin.apps.length) {
     const serviceAccountPath =
       process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
@@ -26,8 +37,7 @@ function initFirebase() {
     admin.initializeApp({
       credential,
       projectId,
-      databaseURL: process.env.FIREBASE_DATABASE_URL ||
-        `https://${projectId}-default-rtdb.firebaseio.com`,
+      databaseURL,
     });
   }
   _initialized = true;
