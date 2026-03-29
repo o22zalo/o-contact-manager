@@ -51,12 +51,9 @@ function buildQuery(params) {
   } else if (email) {
     q = q.where('allEmails', 'array-contains', email);
   } else if (udKey) {
-    if (category) {
-      q = q.where('categories', 'array-contains', category)
-            .where('userDefinedKeys', 'array-contains', udKey);
-    } else {
-      q = q.where('userDefinedKeys', 'array-contains', udKey);
-    }
+    // Firestore không hỗ trợ 2 điều kiện array-contains trong cùng một query.
+    // Khi có cả category + udKey, query theo udKey trước và lọc category ở tầng ứng dụng.
+    q = q.where('userDefinedKeys', 'array-contains', udKey);
   } else if (category) {
     q = q.where('categories', 'array-contains', category);
   } else if (domain) {
@@ -73,20 +70,48 @@ function buildQuery(params) {
 async function paginateQuery(params) {
   const db = getFirestore();
   let q = buildQuery(params);
+  const needsCategoryPostFilter = Boolean(params.category && params.udKey);
+  const pageSize = needsCategoryPostFilter
+    ? Math.min(Math.max(params.limit * 3, 60), 500)
+    : params.limit + 1;
+  const collected = [];
 
+  let lastDoc = null;
   if (params.cursor) {
     const docId = decodeCursor(params.cursor);
     if (docId) {
       const cursorSnap = await db.collection('contacts_index').doc(docId).get();
-      if (cursorSnap.exists) q = q.startAfter(cursorSnap);
+      if (cursorSnap.exists) lastDoc = cursorSnap;
     }
   }
 
-  q = q.limit(params.limit + 1);
-  const snapshot = await q.get();
-  const docs = snapshot.docs;
-  const hasMore = docs.length > params.limit;
-  const resultDocs = hasMore ? docs.slice(0, params.limit) : docs;
+  while (collected.length < params.limit + 1) {
+    let batchQuery = q.limit(pageSize);
+    if (lastDoc) batchQuery = batchQuery.startAfter(lastDoc);
+
+    const snapshot = await batchQuery.get();
+    const docs = snapshot.docs;
+    if (!docs.length) break;
+
+    lastDoc = docs[docs.length - 1];
+
+    const matchedDocs = needsCategoryPostFilter
+      ? docs.filter((doc) => {
+          const categories = doc.get('categories');
+          return Array.isArray(categories) && categories.includes(params.category);
+        })
+      : docs;
+
+    for (const doc of matchedDocs) {
+      collected.push(doc);
+      if (collected.length >= params.limit + 1) break;
+    }
+
+    if (!needsCategoryPostFilter || docs.length < pageSize) break;
+  }
+
+  const hasMore = collected.length > params.limit;
+  const resultDocs = hasMore ? collected.slice(0, params.limit) : collected;
   const data = resultDocs.map(d => d.data());
   const nextCursor = hasMore ? encodeCursor(resultDocs[resultDocs.length - 1].id) : null;
   return { data, nextCursor, hasMore, count: data.length };

@@ -6,7 +6,6 @@
     {"collectionGroup":"contacts_index","queryScope":"COLLECTION","fields":[{"fieldPath":"allDomains","arrayConfig":"CONTAINS"},{"fieldPath":"updatedAt","order":"DESCENDING"}]},
     {"collectionGroup":"contacts_index","queryScope":"COLLECTION","fields":[{"fieldPath":"userDefinedKeys","arrayConfig":"CONTAINS"},{"fieldPath":"updatedAt","order":"DESCENDING"}]},
     {"collectionGroup":"contacts_index","queryScope":"COLLECTION","fields":[{"fieldPath":"hasUserDefined","order":"ASCENDING"},{"fieldPath":"updatedAt","order":"DESCENDING"}]},
-    {"collectionGroup":"contacts_index","queryScope":"COLLECTION","fields":[{"fieldPath":"categories","arrayConfig":"CONTAINS"},{"fieldPath":"userDefinedKeys","arrayConfig":"CONTAINS"},{"fieldPath":"updatedAt","order":"DESCENDING"}]},
     {"collectionGroup":"contacts_index","queryScope":"COLLECTION","fields":[{"fieldPath":"emailDomain","order":"ASCENDING"},{"fieldPath":"displayName","order":"ASCENDING"}]}
   ],
   "fieldOverrides": []
