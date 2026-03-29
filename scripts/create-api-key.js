@@ -20,7 +20,8 @@ const fs = require('fs');
 const path = require('path');
 const { getRtdb } = require('../src/utils/firebase-admin');
 
-const WRITE_TIMEOUT_MS = Number(process.env.API_KEY_WRITE_TIMEOUT_MS || 15000);
+const WRITE_TIMEOUT_MS = Number(process.env.API_KEY_WRITE_TIMEOUT_MS || 45000);
+const WRITE_RETRY_COUNT = Number(process.env.API_KEY_WRITE_RETRY_COUNT || 2);
 
 // ─── Parse args ──────────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
@@ -41,6 +42,16 @@ function hashApiKey(apiKey) {
   return crypto.createHash('sha256').update(apiKey).digest('hex');
 }
 
+function resolveDatabaseUrl() {
+  if (process.env.FIREBASE_DATABASE_URL) return process.env.FIREBASE_DATABASE_URL;
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const region = process.env.FIREBASE_DATABASE_REGION;
+  if (region) {
+    return `https://${projectId}-default-rtdb.${region}.firebasedatabase.app`;
+  }
+  return `https://${projectId}-default-rtdb.firebaseio.com`;
+}
+
 function assertRequiredEnv() {
   if (!process.env.FIREBASE_PROJECT_ID) {
     throw new Error('Missing env: FIREBASE_PROJECT_ID');
@@ -58,6 +69,13 @@ function assertRequiredEnv() {
           'Check FIREBASE_SERVICE_ACCOUNT_PATH/GOOGLE_APPLICATION_CREDENTIALS.'
       );
     }
+  }
+
+  const databaseUrl = resolveDatabaseUrl();
+  if (databaseUrl.includes('<') || databaseUrl.includes('>')) {
+    throw new Error(
+      `FIREBASE_DATABASE_URL không hợp lệ (${databaseUrl}). Hãy dùng URL thật từ Firebase Console.`
+    );
   }
 }
 
@@ -85,6 +103,23 @@ async function withTimeout(promise, ms) {
   }
 }
 
+async function writeApiKeyWithRetry(rtdb, keyHash, keyData) {
+  let lastErr;
+  for (let attempt = 1; attempt <= WRITE_RETRY_COUNT + 1; attempt++) {
+    try {
+      await withTimeout(rtdb.ref(`api_keys/${keyHash}`).set(keyData), WRITE_TIMEOUT_MS);
+      return;
+    } catch (err) {
+      lastErr = err;
+      if (attempt > WRITE_RETRY_COUNT) break;
+      console.warn(
+        `⚠️  Attempt ${attempt}/${WRITE_RETRY_COUNT + 1} failed: ${err.message}. Retrying...`
+      );
+    }
+  }
+  throw lastErr;
+}
+
 async function main() {
   try {
     assertRequiredEnv();
@@ -101,8 +136,9 @@ async function main() {
     };
     if (expiresAt) keyData.expiresAt = expiresAt;
 
+    const databaseUrl = resolveDatabaseUrl();
     const rtdb = getRtdb();
-    await withTimeout(rtdb.ref(`api_keys/${keyHash}`).set(keyData), WRITE_TIMEOUT_MS);
+    await writeApiKeyWithRetry(rtdb, keyHash, keyData);
 
     console.log('\n✅ API key created successfully!\n');
     console.log('━'.repeat(60));
@@ -110,6 +146,7 @@ async function main() {
     console.log(`  Key:        ${apiKey}`);
     console.log(`  Hash:       ${keyHash.slice(0, 16)}...`);
     console.log(`  Created:    ${keyData.createdAt}`);
+    console.log(`  RTDB URL:   ${databaseUrl}`);
     if (expiresAt) console.log(`  Expires:    ${expiresAt}`);
     console.log('━'.repeat(60));
     console.log('\n⚠️  Copy this key now — it will NOT be shown again.\n');
@@ -119,8 +156,11 @@ async function main() {
     process.exit(0);
   } catch (err) {
     console.error('\n❌ Failed to create API key:', err.message);
+    if (process.env.FIREBASE_PROJECT_ID) {
+      console.error(`Resolved RTDB URL: ${resolveDatabaseUrl()}`);
+    }
     console.error(
-      'Tips: kiểm tra FIREBASE_PROJECT_ID, FIREBASE_DATABASE_URL, file service account và firewall/network.'
+      'Tips: kiểm tra FIREBASE_DATABASE_URL chính xác từ Firebase Console (Realtime Database > Data), service account và network/firewall.'
     );
     process.exit(1);
   }
