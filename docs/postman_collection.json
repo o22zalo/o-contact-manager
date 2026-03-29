@@ -1,0 +1,377 @@
+{
+  "info": {
+    "name": "O Contact Manager API",
+    "description": "Postman collection để kiểm thử toàn bộ API của dự án o-contact-manager.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "8d8ec9d2-b8f0-4cdc-8594-c9bb6f5f8a01"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "apiKey", "value": "YOUR_API_KEY_HERE", "type": "string" },
+    { "key": "contactId", "value": "", "type": "string" },
+    { "key": "contactEmail", "value": "postman.contact@example.com", "type": "string" },
+    { "key": "udKey", "value": "github.token", "type": "string" },
+    { "key": "jobId", "value": "", "type": "string" },
+    { "key": "cursor", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health",
+            "description": "Health check endpoint (không cần auth)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contacts - List/Search",
+      "item": [
+        {
+          "name": "GET /contacts (list default)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json && json.meta && json.meta.nextCursor) {",
+                  "  pm.collectionVariables.set('cursor', json.meta.nextCursor);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts"
+          }
+        },
+        {
+          "name": "GET /contacts?search=nguyen",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts?search=nguyen"
+          }
+        },
+        {
+          "name": "GET /contacts?category=myContacts",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts?category=myContacts"
+          }
+        },
+        {
+          "name": "GET /contacts?domain=gmail.com",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts?domain=gmail.com"
+          }
+        },
+        {
+          "name": "GET /contacts?email={{contactEmail}}",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts?email={{contactEmail}}"
+          }
+        },
+        {
+          "name": "GET /contacts?udKey={{udKey}}",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts?udKey={{udKey}}"
+          }
+        },
+        {
+          "name": "GET /contacts?hasUD=true",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts?hasUD=true"
+          }
+        },
+        {
+          "name": "GET /contacts?sort=displayName&order=asc",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts?sort=displayName&order=asc"
+          }
+        },
+        {
+          "name": "GET /contacts?cursor={{cursor}}&limit=50",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts?cursor={{cursor}}&limit=50"
+          },
+          "description": "Yêu cầu đã có cursor từ request list trước đó."
+        }
+      ]
+    },
+    {
+      "name": "Contacts - CRUD",
+      "item": [
+        {
+          "name": "POST /contacts (create)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.contactId) {",
+                  "  pm.collectionVariables.set('contactId', json.data.contactId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contact\": {\n    \"displayName\": \"Postman Test Contact\",\n    \"emails\": [\n      { \"type\": [\"INTERNET\", \"WORK\"], \"value\": \"{{contactEmail}}\" }\n    ],\n    \"phones\": [\n      { \"type\": [\"CELL\"], \"value\": \"0901234567\" }\n    ],\n    \"organization\": \"Postman Org\",\n    \"categories\": [\"myContacts\"]\n  },\n  \"userDefined\": {\n    \"github.token\": \"ghp_postman_token\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/contacts"
+          }
+        },
+        {
+          "name": "GET /contacts/{{contactId}}",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts/{{contactId}}"
+          }
+        },
+        {
+          "name": "PUT /contacts/{{contactId}}",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contact\": {\n    \"displayName\": \"Postman Test Contact Updated\",\n    \"emails\": [\n      { \"type\": [\"INTERNET\", \"WORK\"], \"value\": \"{{contactEmail}}\" }\n    ],\n    \"phones\": [\n      { \"type\": [\"CELL\"], \"value\": \"0909999999\" }\n    ],\n    \"organization\": \"Postman Org Updated\",\n    \"categories\": [\"myContacts\", \"work\"]\n  },\n  \"userDefined\": {\n    \"github.token\": \"ghp_postman_token_new\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/contacts/{{contactId}}"
+          }
+        },
+        {
+          "name": "PATCH /contacts/{{contactId}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contact\": {\n    \"organization\": \"Postman Patched Org\"\n  },\n  \"userDefined\": {\n    \"slack.token\": \"xoxb-postman\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/contacts/{{contactId}}"
+          }
+        },
+        {
+          "name": "DELETE /contacts/{{contactId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts/{{contactId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lookup",
+      "item": [
+        {
+          "name": "GET /contacts/by-email/{{contactEmail}}",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts/by-email/{{contactEmail}}"
+          }
+        },
+        {
+          "name": "GET /contacts/by-ud-key/{{udKey}}",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts/by-ud-key/{{udKey}}"
+          }
+        },
+        {
+          "name": "GET /contacts/ud-keys",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts/ud-keys"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bulk",
+      "item": [
+        {
+          "name": "POST /contacts/bulk/import",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 202', function () {",
+                  "  pm.response.to.have.status(202);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.jobId) {",
+                  "  pm.collectionVariables.set('jobId', json.data.jobId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contacts\": [\n    {\n      \"contact\": {\n        \"displayName\": \"Bulk Contact 1\",\n        \"emails\": [{ \"value\": \"bulk1@example.com\" }]\n      }\n    },\n    {\n      \"contact\": {\n        \"displayName\": \"Bulk Contact 2\",\n        \"emails\": [{ \"value\": \"bulk2@example.com\" }]\n      }\n    }\n  ],\n  \"sourceFile\": \"postman_import\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/contacts/bulk/import"
+          }
+        },
+        {
+          "name": "GET /contacts/bulk/import/{{jobId}}",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts/bulk/import/{{jobId}}"
+          }
+        },
+        {
+          "name": "GET /contacts/bulk/export (json)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts/bulk/export"
+          }
+        },
+        {
+          "name": "GET /contacts/bulk/export?format=vcf&category=myContacts",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts/bulk/export?format=vcf&category=myContacts"
+          }
+        },
+        {
+          "name": "GET /contacts/bulk/export?limit=1000",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts/bulk/export?limit=1000"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Meta",
+      "item": [
+        {
+          "name": "GET /contacts/meta/stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "url": "{{baseUrl}}/contacts/meta/stats"
+          }
+        }
+      ]
+    }
+  ]
+}
