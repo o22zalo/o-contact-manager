@@ -3,33 +3,34 @@
 const { getFirestore, FieldValue } = require('./firebase-admin');
 const { buildContactDocs, encodeDocId } = require('./contactMapper');
 
-async function getExistingEmailDocIds(db, contactId) {
+async function getExistingContactMeta(db, contactId) {
   const snap = await db.collection('contacts_index').doc(contactId).get();
-  if (!snap.exists) return [];
-  return (snap.data().allEmails || []).map(email => encodeDocId(email));
-}
-
-async function getExistingUdKeys(db, contactId) {
-  const snap = await db.collection('contacts_index').doc(contactId).get();
-  if (!snap.exists) return [];
-  return snap.data().userDefinedKeys || [];
+  if (!snap.exists) return null;
+  const data = snap.data() || {};
+  return {
+    allEmails: data.allEmails || [],
+    userDefinedKeys: data.userDefinedKeys || [],
+    createdAt: data.createdAt || null,
+  };
 }
 
 async function writeContact(contactJson, options = {}) {
   const db = getFirestore();
   const { isUpdate = false } = options;
 
-  const { contactId, indexDoc, detailDoc, emailLookupDocs, udKeyUpdates } =
-    buildContactDocs(contactJson, options);
+  const requestedContactId = options.contactId;
+  const existingMeta = (isUpdate && requestedContactId)
+    ? await getExistingContactMeta(db, requestedContactId)
+    : null;
 
-  let oldEmailDocIds = [];
-  let oldUdKeys = [];
-  if (isUpdate && options.contactId) {
-    [oldEmailDocIds, oldUdKeys] = await Promise.all([
-      getExistingEmailDocIds(db, contactId),
-      getExistingUdKeys(db, contactId),
-    ]);
-  }
+  const { contactId, indexDoc, detailDoc, emailLookupDocs, udKeyUpdates } =
+    buildContactDocs(contactJson, {
+      ...options,
+      createdAt: existingMeta?.createdAt || options.createdAt || null,
+    });
+
+  const oldEmailDocIds = new Set((existingMeta?.allEmails || []).map(email => encodeDocId(email)));
+  const oldUdKeys = new Set(existingMeta?.userDefinedKeys || []);
 
   const batch = db.batch();
 
@@ -47,6 +48,8 @@ async function writeContact(contactJson, options = {}) {
   }
 
   const newUdKeys = new Set(udKeyUpdates.map(u => u.key));
+  const nowISO = new Date().toISOString();
+
   for (const oldKey of oldUdKeys) {
     if (!newUdKeys.has(oldKey)) {
       const oldDocId = encodeDocId(oldKey);
@@ -54,16 +57,18 @@ async function writeContact(contactJson, options = {}) {
         key: oldKey,
         contactIds: FieldValue.arrayRemove(contactId),
         count: FieldValue.increment(-1),
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowISO,
       }, { merge: true });
     }
   }
+
   for (const { docId, key } of udKeyUpdates) {
+    const isExistingKey = oldUdKeys.has(key);
     batch.set(db.collection('ud_key_lookup').doc(docId), {
       key,
       contactIds: FieldValue.arrayUnion(contactId),
-      count: FieldValue.increment(1),
-      updatedAt: new Date().toISOString(),
+      ...(isExistingKey ? {} : { count: FieldValue.increment(1) }),
+      updatedAt: nowISO,
     }, { merge: true });
   }
 

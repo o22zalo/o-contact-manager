@@ -69,6 +69,7 @@ function buildContactDocs(contactJson, options = {}) {
     contactId = `uid_${nanoid(12)}`,
     sourceFile = null,
     importedAt = new Date(),
+    createdAt = null,
     version = 1,
   } = options;
 
@@ -95,6 +96,7 @@ function buildContactDocs(contactJson, options = {}) {
   const hasUserDefined = userDefinedKeys.length > 0;
 
   const now = new Date().toISOString();
+  const createdAtISO = createdAt || now;
   const importedAtISO = importedAt instanceof Date ? importedAt.toISOString() : importedAt;
 
   const searchTokens = buildSearchTokens({ displayName, organization, primaryEmail, allEmails });
@@ -104,7 +106,7 @@ function buildContactDocs(contactJson, options = {}) {
     allEmails, allDomains, primaryPhone, organization, photoUrl, categories, tags,
     searchTokens, userDefinedKeys, hasUserDefined,
     udKeyCount: userDefinedKeys.length, emailCount: allEmails.length,
-    phoneCount: allPhones.length, createdAt: now, updatedAt: now,
+    phoneCount: allPhones.length, createdAt: createdAtISO, updatedAt: now,
     importedAt: importedAtISO, sourceFile, version,
   };
 
@@ -123,7 +125,7 @@ function buildContactDocs(contactJson, options = {}) {
     },
     userDefined,
     vcfRaw: contactJson.vcfRaw || contactData.vcfRaw || null,
-    createdAt: now, updatedAt: now, version,
+    createdAt: createdAtISO, updatedAt: now, version,
   };
 
   if (!detailDoc.contact.name) delete detailDoc.contact.name;

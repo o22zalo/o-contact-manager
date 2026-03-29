@@ -31,6 +31,16 @@ function parseQueryParams(query = {}) {
   };
 }
 
+
+function validateQueryParams(params) {
+  const hasFilter = Boolean(params.search || params.category || params.domain || params.email || params.udKey || params.hasUD !== null);
+  if (hasFilter && (params.sort !== 'updatedAt' || params.order !== 'desc')) {
+    const err = new Error('Filtered queries currently support only sort=updatedAt&order=desc');
+    err.statusCode = 400;
+    throw err;
+  }
+}
+
 function buildQuery(params) {
   const db = getFirestore();
   let q = db.collection('contacts_index');
@@ -87,4 +97,4 @@ function buildListResponse(paginateResult, params) {
   return { data, meta: { count, limit: params.limit, hasMore, nextCursor, sort: params.sort, order: params.order } };
 }
 
-module.exports = { parseQueryParams, buildQuery, paginateQuery, buildListResponse, encodeCursor, decodeCursor, DEFAULT_LIMIT, MAX_LIMIT };
+module.exports = { parseQueryParams, validateQueryParams, buildQuery, paginateQuery, buildListResponse, encodeCursor, decodeCursor, DEFAULT_LIMIT, MAX_LIMIT };

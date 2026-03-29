@@ -69,13 +69,11 @@ router.post('/import', async (req, res) => {
   // Async processing (fire and forget)
   ;(async () => {
     try {
-      let done = 0;
       const result = await bulkWriteContacts(
         contacts.map(c => ({ ...c, sourceFile: sourceFile || null })),
         {
           concurrency: 5,
           onProgress: async (d) => {
-            done = d;
             // Cập nhật progress mỗi 50 contacts để tránh quá nhiều writes
             if (d % 50 === 0 || d === contacts.length) {
               await rtdb.ref(`import_jobs/${jobId}`).update({ done: d }).catch(() => {});

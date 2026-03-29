@@ -131,4 +131,10 @@ describe('buildContactDocs()', () => {
     expect(r.indexDoc.displayName).toBe('Jane Smith');
     expect(r.indexDoc.primaryEmail).toBe('jane@test.com');
   });
+  test('giữ createdAt nếu được truyền khi update', () => {
+    const createdAt = '2026-01-01T00:00:00.000Z';
+    const r = buildContactDocs(sampleContact, { contactId: 'uid_test123', createdAt });
+    expect(r.indexDoc.createdAt).toBe(createdAt);
+    expect(r.detailDoc.createdAt).toBe(createdAt);
+  });
 });

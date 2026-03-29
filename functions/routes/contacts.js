@@ -16,7 +16,7 @@ const router = express.Router();
 
 const { getFirestore } = require('../utils/firebase-admin');
 const { writeContact, deleteContact } = require('../utils/writeContact');
-const { parseQueryParams, paginateQuery, buildListResponse } = require('../utils/pagination');
+const { parseQueryParams, validateQueryParams, paginateQuery, buildListResponse } = require('../utils/pagination');
 
 // ─── GET /contacts ────────────────────────────────────────────────────────────
 
@@ -32,9 +32,14 @@ router.get('/', async (req, res) => {
       });
     }
 
+    validateQueryParams(params);
+
     const result = await paginateQuery(params);
     return res.json(buildListResponse(result, params));
   } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ error: 'Bad Request', message: err.message });
+    }
     console.error('[GET /contacts]', err);
     return res.status(500).json({ error: 'Internal Server Error', message: err.message });
   }
