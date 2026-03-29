@@ -16,7 +16,7 @@
 require('dotenv').config();
 
 const crypto = require('crypto');
-const { getRtdb } = require('../functions/utils/firebase-admin');
+const { getRtdb } = require('../src/utils/firebase-admin');
 
 // ─── Parse args ──────────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
