@@ -28,3 +28,4 @@ firebase-debug.log
 firebase-debug.*.log
 .opushforce.message
 o-contact-manager-local-demo-firebase-adminsdk-fbsvc-7dce77940f.json
+contacts.vcf

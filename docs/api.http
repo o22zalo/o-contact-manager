@@ -3,7 +3,7 @@
 ### Thay @baseUrl và @apiKey trước khi dùng
 
 @baseUrl = http://localhost:3000
-@apiKey = YOUR_API_KEY_HERE
+@apiKey = g-YDfJ-lOemAuZ10Qi6UmEcvKyUVVpEA-XVnNq3gLTY
 
 # ─── Health ──────────────────────────────────────────────────────────────────
 
@@ -59,7 +59,7 @@ Authorization: Bearer {{apiKey}}
 # ─── Contacts — Detail ───────────────────────────────────────────────────────
 
 ### Xem chi tiết 1 contact
-GET {{baseUrl}}/contacts/uid_abc123
+GET {{baseUrl}}/contacts/uid_I12Rd9qMPPPl
 Authorization: Bearer {{apiKey}}
 
 # ─── Contacts — Create ───────────────────────────────────────────────────────

@@ -11,7 +11,8 @@ function buildDefaultDatabaseUrl(projectId, databaseRegion) {
   if (databaseRegion) {
     return `https://${projectId}-default-rtdb.${databaseRegion}.firebasedatabase.app`;
   }
-  return `https://${projectId}-default-rtdb.firebasedatabase.app`;
+  // Fallback mặc định tương thích rộng hơn khi chưa khai báo region.
+  return `https://${projectId}-default-rtdb.firebaseio.com`;
 }
 
 function initFirebase() {
