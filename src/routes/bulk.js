@@ -267,4 +267,45 @@ async function updateStats(added, errored) {
   );
 }
 
+async function recoverStaleImportJobs(options = {}) {
+  const {
+    maxAgeMinutes = parseInt(process.env.IMPORT_JOB_STALE_MINUTES, 10) || 30,
+    maxJobs = 200,
+  } = options;
+
+  const rtdb = getRtdb();
+  const snap = await rtdb.ref('import_jobs').limitToLast(maxJobs).once('value');
+  if (!snap.exists()) return { recovered: 0, scanned: 0 };
+
+  const jobs = snap.val() || {};
+  const now = Date.now();
+  let recovered = 0;
+  let scanned = 0;
+
+  const updates = {};
+  for (const [jobId, job] of Object.entries(jobs)) {
+    scanned++;
+    if (!job || job.status !== 'running' || !job.startedAt) continue;
+    const startedAt = new Date(job.startedAt).getTime();
+    if (!Number.isFinite(startedAt)) continue;
+    const ageMinutes = (now - startedAt) / (60 * 1000);
+    if (ageMinutes < maxAgeMinutes) continue;
+
+    updates[`${jobId}/status`] = 'failed';
+    updates[`${jobId}/error`] = `Recovered on startup after stale running state (${Math.floor(ageMinutes)}m)`;
+    updates[`${jobId}/finishedAt`] = new Date().toISOString();
+    recovered++;
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await rtdb.ref('import_jobs').update(updates);
+  }
+
+  if (recovered > 0) {
+    console.warn(`[bulk/import] Recovered ${recovered} stale jobs on startup`);
+  }
+  return { recovered, scanned };
+}
+
 module.exports = router;
+module.exports.recoverStaleImportJobs = recoverStaleImportJobs;
