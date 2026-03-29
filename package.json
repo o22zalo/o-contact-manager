@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "description": "Self-hosted contact manager — Firebase Firestore + REST API",
   "main": "src/index.js",
-  "engines": {
-    "node": ">=18"
-  },
+  "engines": { "node": ">=18" },
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
@@ -22,7 +20,7 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^16.6.1",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "firebase-admin": "^12.1.0",
     "nanoid": "^3.3.7"
@@ -34,21 +32,11 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": [
-      "**/tests/**/*.test.js"
-    ]
+    "testMatch": ["**/tests/**/*.test.js"]
   },
   "eslintConfig": {
-    "env": {
-      "node": true,
-      "es2022": true
-    },
-    "parserOptions": {
-      "ecmaVersion": 2022
-    },
-    "rules": {
-      "no-console": "off",
-      "no-unused-vars": "warn"
-    }
+    "env": { "node": true, "es2022": true },
+    "parserOptions": { "ecmaVersion": 2022 },
+    "rules": { "no-console": "off", "no-unused-vars": "warn" }
   }
 }

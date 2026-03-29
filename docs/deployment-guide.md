@@ -47,6 +47,8 @@ nano .env
 ```env
 FIREBASE_PROJECT_ID=your-actual-project-id
 FIREBASE_SERVICE_ACCOUNT_PATH=/opt/contacts-selfhost/serviceAccountKey.json
+# FIREBASE_DATABASE_URL=https://your-project-id-default-rtdb.<region>.firebasedatabase.app
+# FIREBASE_DATABASE_REGION=asia-southeast1
 PORT=3000
 NODE_ENV=production
 CORS_ORIGINS=https://contacts.yourdomain.com
