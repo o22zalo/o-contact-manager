@@ -49,6 +49,7 @@ FIREBASE_PROJECT_ID=your-actual-project-id
 FIREBASE_SERVICE_ACCOUNT_PATH=/opt/contacts-selfhost/serviceAccountKey.json
 PORT=3000
 NODE_ENV=production
+CORS_ORIGINS=https://contacts.yourdomain.com
 ```
 
 Upload `serviceAccountKey.json`:
@@ -117,7 +118,7 @@ cat > ecosystem.config.js << 'EOF'
 module.exports = {
   apps: [{
     name: 'contact-manager',
-    script: 'functions/index.js',
+    script: 'src/index.js',
     instances: 1,
     autorestart: true,
     watch: false,

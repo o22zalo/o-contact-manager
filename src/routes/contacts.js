@@ -18,6 +18,15 @@ const { getFirestore } = require('../utils/firebase-admin');
 const { writeContact, deleteContact } = require('../utils/writeContact');
 const { parseQueryParams, validateQueryParams, paginateQuery, buildListResponse } = require('../utils/pagination');
 
+function internalError(res, req, err, context) {
+  console.error(context, req.requestId, err);
+  return res.status(500).json({
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Unexpected error',
+    requestId: req.requestId,
+  });
+}
+
 // ─── GET /contacts ────────────────────────────────────────────────────────────
 
 router.get('/', async (req, res) => {
@@ -40,8 +49,7 @@ router.get('/', async (req, res) => {
     if (err.statusCode) {
       return res.status(err.statusCode).json({ error: 'Bad Request', message: err.message });
     }
-    console.error('[GET /contacts]', err);
-    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    return internalError(res, req, err, '[GET /contacts]');
   }
 });
 
@@ -67,8 +75,7 @@ router.get('/:id', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error(`[GET /contacts/${id}]`, err);
-    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    return internalError(res, req, err, `[GET /contacts/${id}]`);
   }
 });
 
@@ -101,8 +108,7 @@ router.post('/', async (req, res) => {
       meta: { emailCount: result.emailCount, udKeyCount: result.udKeyCount },
     });
   } catch (err) {
-    console.error('[POST /contacts]', err);
-    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    return internalError(res, req, err, '[POST /contacts]');
   }
 });
 
@@ -128,8 +134,7 @@ router.put('/:id', async (req, res) => {
       meta: { emailCount: result.emailCount, udKeyCount: result.udKeyCount },
     });
   } catch (err) {
-    console.error(`[PUT /contacts/${id}]`, err);
-    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    return internalError(res, req, err, `[PUT /contacts/${id}]`);
   }
 });
 
@@ -175,8 +180,7 @@ router.patch('/:id', async (req, res) => {
       meta: { emailCount: result.emailCount, udKeyCount: result.udKeyCount },
     });
   } catch (err) {
-    console.error(`[PATCH /contacts/${id}]`, err);
-    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    return internalError(res, req, err, `[PATCH /contacts/${id}]`);
   }
 });
 
@@ -197,8 +201,7 @@ router.delete('/:id', async (req, res) => {
     if (err.message && err.message.includes('not found')) {
       return res.status(404).json({ error: 'Not Found', message: err.message });
     }
-    console.error(`[DELETE /contacts/${id}]`, err);
-    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    return internalError(res, req, err, `[DELETE /contacts/${id}]`);
   }
 });
 

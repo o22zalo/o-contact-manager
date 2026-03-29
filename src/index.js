@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const { nanoid } = require('nanoid');
 
 const { authMiddleware } = require('./middleware/auth');
 const contactsRouter = require('./routes/contacts');
@@ -15,6 +16,31 @@ const app = express();
 const requestBuckets = new Map();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX = 60;
+
+function buildCorsOptions() {
+  const isProd = process.env.NODE_ENV === 'production';
+  const rawOrigins = process.env.CORS_ORIGINS || '';
+  const allowedOrigins = rawOrigins
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  if (!isProd) {
+    return { origin: true };
+  }
+
+  if (allowedOrigins.length === 0) {
+    return { origin: false };
+  }
+
+  return {
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('CORS origin denied'));
+    },
+  };
+}
 
 function rateLimitMiddleware(req, res, next) {
   if (req.path === '/health') return next();
@@ -41,10 +67,19 @@ function rateLimitMiddleware(req, res, next) {
 }
 
 // ─── Core middleware ──────────────────────────────────────────────────────────
-app.use(cors());
+app.use(cors(buildCorsOptions()));
 app.use(express.json({ limit: '10mb' })); // bulk import cần limit cao hơn
 app.use(express.urlencoded({ extended: false }));
 app.use(rateLimitMiddleware);
+app.use((req, res, next) => {
+  const requestId = req.headers['x-request-id'] || `req_${nanoid(10)}`;
+  req.requestId = requestId;
+  res.setHeader('X-Request-Id', requestId);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  return next();
+});
 
 // ─── Health check (không cần auth) ───────────────────────────────────────────
 app.get('/health', (req, res) => {
@@ -84,10 +119,11 @@ app.use((req, res) => {
 // ─── Global error handler ─────────────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  console.error('[Unhandled Error]', err);
+  console.error('[Unhandled Error]', req.requestId, err);
   res.status(500).json({
     error: 'Internal Server Error',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
+    requestId: req.requestId,
   });
 });
 

@@ -17,6 +17,15 @@ const router = express.Router();
 const { getFirestore } = require('../utils/firebase-admin');
 const { encodeDocId } = require('../utils/contactMapper');
 
+function internalError(res, req, err, context) {
+  console.error(context, req.requestId, err);
+  return res.status(500).json({
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Unexpected error',
+    requestId: req.requestId,
+  });
+}
+
 // ─── GET /contacts/by-email/:email ───────────────────────────────────────────
 
 router.get('/by-email/:email', async (req, res) => {
@@ -66,8 +75,7 @@ router.get('/by-email/:email', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error(`[GET /contacts/by-email/${email}]`, err);
-    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    return internalError(res, req, err, `[GET /contacts/by-email/${email}]`);
   }
 });
 
@@ -119,8 +127,7 @@ router.get('/by-ud-key/:key', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error(`[GET /contacts/by-ud-key/${req.params.key}]`, err);
-    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    return internalError(res, req, err, `[GET /contacts/by-ud-key/${req.params.key}]`);
   }
 });
 
@@ -147,8 +154,7 @@ router.get('/ud-keys', async (req, res) => {
       meta: { total: keys.length },
     });
   } catch (err) {
-    console.error('[GET /contacts/ud-keys]', err);
-    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    return internalError(res, req, err, '[GET /contacts/ud-keys]');
   }
 });
 

@@ -15,7 +15,6 @@
     "migrate": "node scripts/migrate-v2.js",
     "create-key": "node scripts/create-api-key.js",
     "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes",
-    "deploy:functions": "firebase deploy --only functions",
     "deploy": "firebase deploy",
     "health": "node scripts/health-check.js"
   },
