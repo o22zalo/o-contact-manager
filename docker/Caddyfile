@@ -1,0 +1,43 @@
+{
+  auto_https disable_redirects
+}
+
+{$APP_DOMAIN} {
+  @api path /api* /health
+  handle @api {
+    uri strip_prefix /api
+    reverse_proxy backend:3000
+  }
+
+  handle {
+    basicauth {
+      {$APP_BASICAUTH_USER} {$APP_BASICAUTH_HASH}
+    }
+    reverse_proxy frontend:80
+  }
+
+  encode zstd gzip
+  header {
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "no-referrer"
+  }
+}
+
+{$PORTAINER_DOMAIN} {
+  reverse_proxy portainer:9000
+}
+
+{$LOGS_DOMAIN} {
+  basicauth {
+    {$LOGS_BASICAUTH_USER} {$LOGS_BASICAUTH_HASH}
+  }
+  reverse_proxy dozzle:8080
+}
+
+{$FILES_DOMAIN} {
+  basicauth {
+    {$FILES_BASICAUTH_USER} {$FILES_BASICAUTH_HASH}
+  }
+  reverse_proxy filebrowser:80
+}

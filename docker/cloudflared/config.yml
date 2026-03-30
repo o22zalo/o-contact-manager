@@ -1,0 +1,10 @@
+ingress:
+  - hostname: ${APP_DOMAIN}
+    service: http://caddy:80
+  - hostname: ${PORTAINER_DOMAIN}
+    service: http://caddy:80
+  - hostname: ${LOGS_DOMAIN}
+    service: http://caddy:80
+  - hostname: ${FILES_DOMAIN}
+    service: http://caddy:80
+  - service: http_status:404

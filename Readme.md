@@ -250,3 +250,12 @@ npm run health -- --key YOUR_API_KEY
 ## Changelog
 
 Xem: [`CHANGE_LOGS_USER.md`](CHANGE_LOGS_USER.md)
+
+
+## Triển khai Fullstack Docker (Frontend + Backend + Ops)
+
+- Kiến trúc tổng quan: [`docs/architecture-overview.md`](docs/architecture-overview.md)
+- Hướng dẫn triển khai 1 máy: [`docs/deployment-fullstack-single-host.md`](docs/deployment-fullstack-single-host.md)
+- Báo cáo tương thích FE/BE: [`docs/frontend-backend-compatibility-2026-03-29.md`](docs/frontend-backend-compatibility-2026-03-29.md)
+- Stack Docker: `docker-compose.yml` + thư mục `docker/`
+- Mẫu CI demo: `.github/workflows/demo-stack.yml` và `azure-pipelines.yml`

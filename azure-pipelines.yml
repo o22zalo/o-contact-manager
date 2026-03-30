@@ -1,0 +1,32 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  demoPath: '/opt/o-contact-manager'
+
+stages:
+  - stage: DeployDemo
+    jobs:
+      - job: DeployWithSSH
+        steps:
+          - checkout: self
+
+          - task: SSH@0
+            inputs:
+              sshEndpoint: 'sshServiceConnection'
+              runOptions: 'commands'
+              commands: |
+                set -e
+                cd $(demoPath)
+                git fetch --all
+                git reset --hard origin/main
+                docker compose build
+                docker compose up -d
+                docker compose ps
+                curl -fsS http://localhost/health
+              readyTimeout: '20000'

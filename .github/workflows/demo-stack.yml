@@ -1,0 +1,29 @@
+name: demo-stack-deploy
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEMO_HOST }}
+          username: ${{ secrets.DEMO_USER }}
+          key: ${{ secrets.DEMO_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEMO_PATH }}
+            git fetch --all
+            git reset --hard origin/main
+            docker compose build
+            docker compose up -d
+            docker compose ps
+            curl -fsS http://localhost/health
